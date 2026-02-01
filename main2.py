@@ -8,8 +8,8 @@ from deepgram import DeepgramClient
 # OPENAI_KEY = "YOUR_OPENAI_KEY"
 # DEEPGRAM_KEY = "YOUR_DEEPGRAM_KEY"
 
-OPENAI_KEY = "sk-proj--6-ERugsqxL45hXjGjgFJzlq"
-DEEPGRAM_KEY = "324b8c9649eda16fc78d7b46eca541144702e05"
+OPENAI_KEY = "sk-proj--6-"
+DEEPGRAM_KEY = "302e05"
 #""
 
 
