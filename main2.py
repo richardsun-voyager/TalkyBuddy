@@ -8,9 +8,9 @@ from deepgram import DeepgramClient
 # OPENAI_KEY = "YOUR_OPENAI_KEY"
 # DEEPGRAM_KEY = "YOUR_DEEPGRAM_KEY"
 
-OPENAI_KEY = "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"
-DEEPGRAM_KEY = "324b8c9649eda16fcd78d7b46eca541144702e05"
-#"YOa5a0fac313f6c4ccef637b549c715120d706e5b0UR_DEEPGRAM_API_KEY"
+OPENAI_KEY = "sk-proj--6-ERugsqxL45hXjGjgFJzlq"
+DEEPGRAM_KEY = "324b8c9649eda16fc78d7b46eca541144702e05"
+#""
 
 
 client = OpenAI(api_key=OPENAI_KEY)

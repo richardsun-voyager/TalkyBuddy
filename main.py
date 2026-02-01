@@ -3,8 +3,8 @@ import requests
 from openai import OpenAI
 
 # Keys
-OPENAI_KEY = "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"
-DEEPGRAM_KEY = "YOa5a0fac313f6c4ccef637b549c715120d706e5b0UR_DEEPGRAM_API_KEY"
+OPENAI_KEY = "sk-proj-G4XSy2DKe1hSuknsZgHoWFKFbffg-6-"
+DEEPGRAM_KEY = "YOa50UR_DEEPGRAM_API_KEY"
 
 client = OpenAI(api_key=OPENAI_KEY)
 
