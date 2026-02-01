@@ -2,16 +2,22 @@ import os
 import requests
 import wave
 import sys
+import json
 from openai import OpenAI
 from deepgram import DeepgramClient
-# --- Configuration ---
-# OPENAI_KEY = "YOUR_OPENAI_KEY"
-# DEEPGRAM_KEY = "YOUR_DEEPGRAM_KEY"
 
-OPENAI_KEY = "sk-proj--6-"
-DEEPGRAM_KEY = "302e05"
-#""
+# Load credentials from config.json
+def load_config():
+    config_path = os.path.join(os.path.dirname(__file__), "config.json")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    return config
 
+config = load_config()
+OPENAI_KEY = config["openai_api_key"]
+DEEPGRAM_KEY = config["deepgram_api_key"]
 
 client = OpenAI(api_key=OPENAI_KEY)
 

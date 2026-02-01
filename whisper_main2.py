@@ -2,6 +2,8 @@ import os
 import requests
 import json
 from openai import OpenAI
+import sounddevice as sd
+import soundfile as sf
 
 # Load credentials from config.json
 def load_config():
@@ -17,6 +19,37 @@ OPENAI_KEY = config["openai_api_key"]
 DEEPGRAM_KEY = config["deepgram_api_key"]
 
 client = OpenAI(api_key=OPENAI_KEY)
+
+def record_audio(filename="input.wav", duration=10, rate=16000):
+    """Records audio from microphone (cross-platform)"""
+    print("Recording...")
+    try:
+        # Find the first input device with input channels
+        devices = sd.query_devices()
+        input_device = None
+        for i, device in enumerate(devices):
+            if device['max_input_channels'] > 0:
+                input_device = i
+                print(f"Using input device: {device['name']}")
+                break
+        
+        if input_device is None:
+            print("No input device found! Available devices:")
+            print(devices)
+            return
+        
+        audio = sd.rec(int(duration * rate), samplerate=rate, channels=1, dtype='float32', device=input_device)
+        sd.wait()
+        sf.write(filename, audio, rate)
+        print("Recording saved!")
+    except Exception as e:
+        print(f"Recording error: {e}")
+
+def transcribe_audio(filename="input.wav"):
+    """Converts speech to text using Whisper"""
+    with open(filename, "rb") as f:
+        transcript = client.audio.transcriptions.create(model="whisper-1", file=f)
+    return transcript.text
 
 def get_deepgram_tts(text, filename="output.mp3"):
     """Uses Deepgram's Aura-2 for 5x cheaper speech than OpenAI"""
@@ -38,18 +71,20 @@ def chat_loop():
     messages = [{"role": "system", "content": "You are a friendly teacher. Speak simply."}]
     
     while True:
-        user_input = input("👦 You (Type or speak): ")
+        print("🎤 Listening...")
+        record_audio()
+        user_input = transcribe_audio()
+        print(f"👦 You: {user_input}")
+        
         if user_input.lower() in ["exit", "bye"]: break
         
-        # 1. Brain (GPT-4o-mini is ultra-cheap)
         messages.append({"role": "user", "content": user_input})
         res = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
         ai_text = res.choices[0].message.content
         print(f"🤖 AI: {ai_text}")
         
-        # 2. Voice (Deepgram is ultra-cheap)
         if get_deepgram_tts(ai_text):
-            os.system("afplay output.mp3") # Mac. Use 'start' for Windows.
+            os.system("afplay output.mp3")
 
 if __name__ == "__main__":
     chat_loop()

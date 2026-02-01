@@ -2,10 +2,9 @@ import os
 import requests
 import json
 import numpy as np
-import whisper
+from openai import OpenAI
 import sounddevice as sd
 import soundfile as sf
-from openai import OpenAI
 
 # Load credentials from config.json
 def load_config():
@@ -22,16 +21,6 @@ DEEPGRAM_KEY = config["deepgram_api_key"]
 
 client = OpenAI(api_key=OPENAI_KEY)
 
-# Load local Whisper model (base model is ~150MB, fast and accurate)
-print("📦 Loading Whisper model (this takes ~10 seconds on first run)...")
-try:
-    whisper_model = whisper.load_model("base")
-    print("✅ Whisper model loaded!\n")
-except Exception as e:
-    print(f"❌ Error loading Whisper model: {e}")
-    print("Make sure you have ffmpeg installed: brew install ffmpeg")
-    whisper_model = None
-
 def record_audio(filename="input.wav", duration=8, rate=16000):
     """
     Records audio from microphone with fixed duration.
@@ -44,22 +33,18 @@ def record_audio(filename="input.wav", duration=8, rate=16000):
     """
     print(f"🎤 Recording for {duration} seconds... speak now!")
     try:
-        # List all available input devices
+        # Find the first input device with input channels
         devices = sd.query_devices()
-        print("\n📋 Available input devices:")
-        input_devices = []
+        input_device = None
         for i, device in enumerate(devices):
             if device['max_input_channels'] > 0:
-                print(f"   [{i}] {device['name']} (channels: {device['max_input_channels']})")
-                input_devices.append(i)
+                input_device = i
+                print(f"   Using device: {device['name']}")
+                break
         
-        if not input_devices:
+        if input_device is None:
             print("❌ No input device found!")
             return
-        
-        # Use the default input device (usually the system default)
-        print(f"\n   Using default device...")
-        input_device = None  # None means use system default
         
         # Simple fixed-duration recording
         print("   Listening...")
@@ -71,7 +56,7 @@ def record_audio(filename="input.wav", duration=8, rate=16000):
         print(f"   Audio level: {max_amplitude:.4f}")
         
         if max_amplitude < 0.001:
-            print("⚠️  Very quiet audio detected. Try speaking louder or check your microphone!")
+            print("⚠️  Very quiet audio detected. Check your microphone!")
         
         sf.write(filename, audio, rate)
         print("✅ Recording saved!")
@@ -80,21 +65,12 @@ def record_audio(filename="input.wav", duration=8, rate=16000):
         print(f"❌ Recording error: {e}")
 
 def transcribe_audio(filename="input.wav"):
-    """Converts speech to text using local Whisper (instant, no network latency)"""
+    """Converts speech to text using Whisper with progress feedback"""
     print("⏳ Transcribing...")
     try:
-        if whisper_model is None:
-            # Fallback to OpenAI API
-            print("   Using OpenAI API (local model not available)...")
-            with open(filename, "rb") as f:
-                transcript = client.audio.transcriptions.create(model="whisper-1", file=f)
-            return transcript.text
-        
-        result = whisper_model.transcribe(filename, language="en")
-        text = result["text"].strip()
-        if not text:
-            print("⚠️  No speech detected.")
-        return text
+        with open(filename, "rb") as f:
+            transcript = client.audio.transcriptions.create(model="whisper-1", file=f)
+        return transcript.text
     except Exception as e:
         print(f"❌ Transcription error: {e}")
         return ""
